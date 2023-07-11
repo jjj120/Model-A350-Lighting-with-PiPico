@@ -11,28 +11,36 @@ class Aircraft:
     _navigation: bool = False
     _landing_front: bool = False
     _landing_wings: bool = False
+    _landing_back: bool = False
     _strobe: bool = False
     _beacon: bool = False
+    _cockpit: bool = False
 
-    pin_logo: machine.Pin
-    pin_navigation: machine.Pin
-    pin_landing_front: machine.Pin
-    pin_landing_wings: machine.Pin
-    pin_strobe: machine.Pin
-    pin_beacon: machine.Pin
+    pin_logo: machine.Pin           #
+    pin_navigation: machine.Pin     #
+                                    #
+    pin_landing_front: machine.Pin  #
+    pin_landing_wings: machine.Pin  #
+    pin_landing_back: machine.Pin   #
+    pin_strobe: machine.Pin         #
+    pin_beacon: machine.Pin         #
+    pin_cockpit: machine.Pin        #
     
 
-    def __init__(self, pin_logo, pin_navigation, pin_landing_front, pin_landing_wings, pin_strobe, pin_beacon):
+    def __init__(self, pin_logo, pin_navigation, pin_landing_front, pin_landing_wings, pin_landing_back, pin_strobe, pin_beacon, pin_cockpit) -> None:
         self.pin_logo = machine.Pin(pin_logo, machine.Pin.OUT)
         self.pin_navigation = machine.Pin(pin_navigation, machine.Pin.OUT)
         self.pin_landing_front = machine.Pin(pin_landing_front, machine.Pin.OUT)
         self.pin_landing_wings = machine.Pin(pin_landing_wings, machine.Pin.OUT)
+        self.pin_landing_back = machine.Pin(pin_landing_back, machine.Pin.OUT)
         self.pin_strobe = machine.Pin(pin_strobe, machine.Pin.OUT)
         self.pin_beacon = machine.Pin(pin_beacon, machine.Pin.OUT)
+        self.pin_cockpit = machine.Pin(pin_cockpit, machine.Pin.OUT)
 
 
 
     def debugPrint(self, message) -> None:
+        # pass
         print(message)
 
     @property
@@ -90,6 +98,20 @@ class Aircraft:
         self.pin_landing_wings.off()
         self._landing_wings = False
 
+    
+    @property
+    def landing_back(self) -> bool:
+        return self._landing_wings
+
+    def landing_back_on(self) -> None:
+        self.debugPrint("enable landing_back_on")
+        self.pin_landing_back.on()
+        self._landing_back = True
+    def landing_back_off(self) -> None:
+        self.debugPrint("disable landing_back_off")
+        self.pin_landing_back.off()
+        self._landing_back = False
+
 
 
     strobe_task: asyncio.Task
@@ -130,7 +152,41 @@ class Aircraft:
         except Exception as e:
             self.debugPrint("Exception: " + str(e))
         self._beacon = False
+    
 
+    @property
+    def cockpit(self) -> bool:
+        return self._landing_wings
+
+    def cockpit_on(self) -> None:
+        self.debugPrint("enable cockpit_on")
+        self.pin_cockpit.on()
+        self._cockpit = True
+    def cockpit_off(self) -> None:
+        self.debugPrint("disable cockpit_off")
+        self.pin_cockpit.off()
+        self._cockpit = False
+    
+
+    def all_on(self) -> None:
+        self.logo_on()
+        self.navigation_on()
+        self.landing_front_on()
+        self.landing_wings_on()
+        self.landing_back_on()
+        self.strobe_on()
+        self.beacon_on()
+        self.cockpit_on()
+    
+    def all_off(self) -> None:
+        self.logo_off()
+        self.navigation_off()
+        self.landing_front_off()
+        self.landing_wings_off()
+        self.landing_back_off()
+        self.strobe_off()
+        self.beacon_off()
+        self.cockpit_off()
 
     @property
     def status(self) -> dict:
@@ -139,8 +195,10 @@ class Aircraft:
             'navigation': self.navigation,
             'landingFront': self.landing_front,
             'landingWings': self.landing_wings,
+            'landingBack': self.landing_back,
             'strobe': self.strobe,
-            'beacon': self.beacon
+            'beacon': self.beacon,
+            'cockpit': self.cockpit
         }
     
     async def blink(self, pin: machine.Pin, delay_on1: float, delay_off1: float, delay_on2: float = 0, delay_off2: float = 0) -> None:
