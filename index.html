@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Airbus A350</title>
+    <style>
+        body {
+            text-align: center;
+            justify-content: center;
+            color: #fff;
+            background-color: #242424;
+        }
+
+        button {
+            background-color: #242424;
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            width: 200px;
+        }
+
+        button:hover {
+            background-color: #fff;
+            color: #242424;
+        }
+
+        .button-on.button-white {
+            box-shadow: 0 0px 20px #fff; 
+        }
+
+        @keyframes blinker-orange {
+            0% { box-shadow: 0 0px 20px #ff9900; }
+            8% { box-shadow: 0 0px 20px #ff9900; }
+            9% { box-shadow: none; }
+            100% { box-shadow: none; }
+        }
+        .button-on.blink-orange {
+            animation-name: blinker-orange;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-direction: normal;
+        }
+
+        @keyframes blinker-white {
+            0% { box-shadow: none; }
+            49% { box-shadow: none; }
+            50% { box-shadow: 0 0px 20px white; }
+            54% { box-shadow: 0 0px 20px white; }
+            55% { box-shadow: none; }
+            58% { box-shadow: none; }
+            59% { box-shadow: 0 0px 20px white; }
+            62% { box-shadow: 0 0px 20px white; }
+            63% { box-shadow: none; }
+            100% { box-shadow: none; }
+        }
+        .button-on.blink-white {
+            animation-name: blinker-white;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-direction: normal;
+        }
+
+        @keyframes blinker-orange-white {
+            0% { box-shadow: 0 0px 20px #ff9900; }
+            8% { box-shadow: 0 0px 20px #ff9900; }
+            9% { box-shadow: none; }
+            49% { box-shadow: none; }
+            50% { box-shadow: 0 0px 20px white; }
+            54% { box-shadow: 0 0px 20px white; }
+            55% { box-shadow: none; }
+            58% { box-shadow: none; }
+            59% { box-shadow: 0 0px 20px white; }
+            62% { box-shadow: 0 0px 20px white; }
+            63% { box-shadow: none; }
+            100% { box-shadow: none; }
+        }
+        .button-on.blink-orange-white {
+            animation-name: blinker-orange-white;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-direction: normal;
+        }
+    </style>
+    <script type="text/javascript">
+        function sendRequest(url) {
+            console.log("sendRequest: " + url);
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "/api/" + url, true);
+            xhttp.send();
+        }
+
+        function toggleLight(clickId) {
+            var enabled = running(clickId);
+            if (enabled) {
+                turnOff(clickId);
+            } else {
+                turnOn(clickId);
+            }
+        }
+
+        function turnOff(clickId) {
+            if (!running(clickId)) {
+                return;
+            }
+
+            if (clickId == "landing") {
+                turnOff("landing-front")
+                turnOff("landing-wings")
+                checkSpecials();
+                return;
+            }
+            if (clickId == "anti-collision") {
+                turnOff("strobe")
+                turnOff("beacon")
+                checkSpecials();
+                return;
+            }
+            if (clickId == "all") {
+                turnOff("logo")
+                turnOff("navigation")
+                turnOff("landing-front")
+                turnOff("landing-wings")
+                turnOff("strobe")
+                turnOff("beacon")
+                checkSpecials();
+                return;
+            }
+
+            var button = document.getElementById(clickId);
+            button.classList.remove("button-on");
+            sendRequest(clickId + "/disable");
+            checkSpecials();
+        }
+
+        function turnOn(clickId) {
+            if (running(clickId)) {
+                return;
+            }
+
+            if (clickId == "landing") {
+                turnOn("landing-front")
+                turnOn("landing-wings")
+                checkSpecials();
+                return;
+            }
+            if (clickId == "anti-collision") {
+                turnOn("strobe")
+                turnOn("beacon")
+                checkSpecials();
+                return;
+            }
+            if (clickId == "all") {
+                turnOn("logo")
+                turnOn("navigation")
+                turnOn("landing-front")
+                turnOn("landing-wings")
+                turnOn("strobe")
+                turnOn("beacon")
+                checkSpecials();
+                return;
+            }
+
+            var button = document.getElementById(clickId);
+            button.classList.add("button-on");
+            sendRequest(clickId + "/enable");
+            checkSpecials();
+        }
+
+        function running(id) {
+            return document.getElementById(id).classList.contains("button-on");
+        }
+
+        function checkSpecials() {
+            // check for landing
+            if (running("landing-wings") && running("landing-front")) {
+                document.getElementById("landing").classList.add("button-on");
+            } else {
+                document.getElementById("landing").classList.remove("button-on");
+            }
+            // check for anti-collision
+            if (running("strobe") && running("beacon")) {
+                document.getElementById("anti-collision").classList.add("button-on");
+            } else {
+                document.getElementById("anti-collision").classList.remove("button-on");
+            }
+            // check for all
+            if (
+                running("logo") && 
+                running("navigation") && 
+                running("landing-front") && 
+                running("landing-wings") && 
+                running("landing") && 
+                running("strobe") && 
+                running("beacon") && 
+                running("anti-collision")
+                ) {
+                    document.getElementById("all").classList.add("button-on");
+            } else {
+                document.getElementById("all").classList.remove("button-on");
+            }
+        }
+
+        function refreshStatus() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+
+                    var status = JSON.parse(this.responseText);
+                    console.log(status);
+
+                    // logo
+                    if (status.logo) {
+                        document.getElementById("logo").classList.add("button-on");
+                    } else {
+                        document.getElementById("logo").classList.remove("button-on");
+                    }
+
+                    // navigation
+                    if (status.navigation) {
+                        document.getElementById("navigation").classList.add("button-on");
+                    } else {
+                        document.getElementById("navigation").classList.remove("button-on");
+                    }
+                    
+                    // landing-front
+                    if (status.landingFront) {
+                        document.getElementById("landing-front").classList.add("button-on");
+                    } else {
+                        document.getElementById("landing-front").classList.remove("button-on");
+                    }
+
+                    // landing-wings
+                    if (status.landingWings) {
+                        document.getElementById("landing-wings").classList.add("button-on");
+                    } else {
+                        document.getElementById("landing-wings").classList.remove("button-on");
+                    }
+
+                    // strobe
+                    if (status.strobe) {
+                        document.getElementById("strobe").classList.add("button-on");
+                    } else {
+                        document.getElementById("strobe").classList.remove("button-on");
+                    }
+
+                    // beacon
+                    if (status.beacon) {
+                        document.getElementById("beacon").classList.add("button-on");
+                    } else {
+                        document.getElementById("beacon").classList.remove("button-on");
+                    }
+
+                    checkSpecials();
+                }
+            };
+            xhttp.url = "status";
+            xhttp.open("GET", "/api/status", true);
+            xhttp.send();
+        }
+
+    </script>
+</html>
+<body>
+    <!-- <h1>Website</h1> -->
+    <!-- <p>Website content</p> -->
+    <!-- Enumerate: -->
+    <!-- <ul>
+        <li>Rot-Grün Flügelspitzen</li>
+        <li>Bugfahrwerk</li>
+        <li>Flügelansätze weiß</li>
+        <li>Leitwerk</li>
+        <li>Strobe Flügelspitzen (40 bpm)</li>
+        <li>Beacon orange (wie Strobe aber abwechselnd)</li>
+    </ul> -->
+
+    <br>
+    <h2>Aircraft</h2>
+    <button id="logo"           class="button-white"       onclick=toggleLight(this.id)>Logo</button><br><br>
+    <button id="navigation"     class="button-white"       onclick=toggleLight(this.id)>Navigation</button><br><br>
+    <button id="landing-front"  class="button-white"       onclick=toggleLight(this.id)>Landing Front</button><br><br>
+    <button id="landing-wings"  class="button-white"       onclick=toggleLight(this.id)>Landing Wings</button><br><br>
+    <button id="landing"        class="button-white"       onclick=toggleLight(this.id)>Landing all</button><br><br>
+    <button id="strobe"         class="blink-white"        onclick=toggleLight(this.id)>Strobe</button><br><br>
+    <button id="beacon"         class="blink-orange"       onclick=toggleLight(this.id)>Beacon</button><br><br>
+    <button id="anti-collision" class="blink-orange-white" onclick=toggleLight(this.id)>Anti-Collision</button><br><br>
+    <button id="all"            class="button-white"       onclick=toggleLight(this.id)>All</button><br><br>
+</body>
+<footer>
+    <!-- <script type="text/javascript">
+        toggleLight("all");
+    </script> -->
+    <script type="text/javascript">
+        refreshStatus();
+        setInterval(refreshStatus, 10000);
+    </script>
+</footer>
+</html>
